@@ -290,6 +290,54 @@ void getPoseWeights(MDoubleArray &out,
 
 //
 // Description:
+//      Pass the weight values to the outputs.
+//
+// Input Arguments:
+//      weightsArray    The array of output weight values.
+//      data            The MPxNode dataBlock.
+//      inactive        True, if the node is enabled.
+//
+// Return Value:
+//      None
+//
+void setOutputValues(MDoubleArray weightsArray, Array& output, bool inactive, const MIntArray& poseMatrixIds, bool genericMode)
+{
+    unsigned int i;
+
+    // In generic mode pose and output indices are not related.
+    // The ordering of the output always starts at 0 with an increment
+    // of 1, no matter if pose indices are missing.
+    // In matrix mode pose and output indices are matching, due to the
+    // square dimensions of blendshape usage.
+    unsigned count = 0;
+    MIntArray ids;
+    if (genericMode)
+    {
+        count = weightsArray.length();
+        ids.setLength(count);
+        for (i = 0; i < count; i ++)
+            ids.set((int)i, i);
+    }
+    else
+    {
+        count = poseMatrixIds.length();
+        ids = poseMatrixIds;
+    }
+
+    for (i = 0; i < count; i ++)
+    {
+        while(int(output.size()) < ids[i])
+            output.push_back(0.f);
+        if (!inactive)
+            output.push_back(float(weightsArray[i]));
+        else
+            output.push_back(0.f);
+    }
+}
+
+
+//
+// Description:
 //      Modify the value by shifting it towards the lower or upper end
 //      of the interpolation range.
 //
@@ -441,7 +489,8 @@ void getPoseVectors(EvalContext& ctx,
     MIntArray &poseModes,
     unsigned twistAxisVal,
     bool invertAxes,
-    unsigned driverId
+    unsigned driverId,
+    MIntArray& poseMatrixIds
     )
 {
     unsigned int d, i, p;
@@ -486,6 +535,12 @@ void getPoseVectors(EvalContext& ctx,
         const MMatrix jointOrientMatInv = Eulerf(jointOrient, Eulerf::Order::XYZ).toMatrix44().inverse();
 
         const Array poseArrayHandle(driverListIdHandle.read("pose"));
+        {
+            const BufferConstUInt32 _poseMatrixIds(driverListIdHandle.read("poseMatrixIds"));
+            poseMatrixIds.clear();
+            for(const auto index : _poseMatrixIds)
+                poseMatrixIds.append(index);
+        }
 
         // Build a local transform matrix.
         MTransformationMatrix transMatDriver = driverMat * driverParentMatInv * jointOrientMatInv;
@@ -517,19 +572,16 @@ void getPoseVectors(EvalContext& ctx,
         // amount of poses and data values.
         if (d == 0)
         {
-            /*
-            posePlug.getExistingArrayAttributeIndices(poseMatrixIds, &status);
-            CHECK_MSTATUS_AND_RETURN_IT(status);
+            /*posePlug.getExistingArrayAttributeIndices(poseMatrixIds, &status);
+            CHECK_MSTATUS_AND_RETURN_IT(status);*/
 
             poseCount = poseMatrixIds.length();
 
-            if (poseCount != globalPoseCount)
+            /*if (poseCount != globalPoseCount)
             {
                 globalPoseCount = poseCount;
                 evalInput = true;
-            }
-            */
-            poseCount = (unsigned)poseArrayHandle.size();
+            }*/
 
             // ---------------------------------------------------------
             // prepare the data matrices
@@ -577,7 +629,8 @@ void getPoseVectors(EvalContext& ctx,
 
             for (i = 0; i < poseCount; i ++)
             {
-                const Dict poseIdHandle = poseArrayHandle.read(i);
+                // status = poseArrayHandle.jumpToArrayElement(i);
+                const Dict poseIdHandle = poseArrayHandle.read(poseMatrixIds[i]);
                 MMatrix poseMat = poseIdHandle.as_M44f("poseMatrix");
                 MMatrix parentMat = poseIdHandle.as_M44f("poseParentMatrix");
 
@@ -955,6 +1008,8 @@ rumba::Value compute(OutputPlug plug, EvalContext& ctx)
     const Array blendCurveVal = ctx.value(blendCurve);
 
     MRampAttribute curveAttr(blendCurveVal, "blendCurve");
+    bool genericMode = false;
+    MIntArray poseMatrixIds;
 
     if (((plug == output && typeVal != 0) || (plug == outWeight && typeVal == 0)) && activeVal)
     {
@@ -1136,7 +1191,7 @@ rumba::Value compute(OutputPlug plug, EvalContext& ctx)
             Array inputIds = ctx.value(input);
 
             // Set generic mode to be the default.
-            bool genericMode = true;
+            genericMode = true;
             if (inputIds.size())
             {
 /*                MDataHandle rbfModeHandle = ctx.outputValue(rbfMode);
@@ -1160,6 +1215,7 @@ rumba::Value compute(OutputPlug plug, EvalContext& ctx)
 
             if (genericMode)
             {
+                // genericMode not supported right now
                 /*
                 unsigned int driverSize = (unsigned int)inputIds.size();
                 driver.resize(driverSize);
@@ -1190,7 +1246,8 @@ rumba::Value compute(OutputPlug plug, EvalContext& ctx)
                     poseModes,
                     (unsigned)twistAxisVal,
                     oppositeVal,
-                    (unsigned)driverIndexVal);
+                    (unsigned)driverIndexVal,
+                    poseMatrixIds);
 
                 // Override the distance type for the matrix mode to
                 // euclidean which makes it easier to calculate rotation
@@ -1339,18 +1396,19 @@ rumba::Value compute(OutputPlug plug, EvalContext& ctx)
         // pass the pose value to the output
         // -----------------------------------------------
 
-        Array result;
-        for(int i = 0; i < (int)weightsArray.length(); ++i)
-            result.push_back(float(weightsArray[i]));
+        Array output;
+        setOutputValues(weightsArray, output, false, poseMatrixIds, genericMode);
 
-        return result;
+        return output;
     }
     else if (plug == output && !activeVal)
     {
-        Array result;
-        result.push_back(1.f);
+        Array output;
+        MDoubleArray da(1);
+        da[0] = 0.0;
+        setOutputValues(da, output, true, poseMatrixIds, genericMode);
 
-        return result;
+        return output;
     }
 
     return Value::default_value;

@@ -71,8 +71,12 @@ class weightDriverExporter(NodeExporter):
             driverInput = driver.child(0)
             walk(context, parent, dagNodeFn, driverInput, driver_dict, "driverInput")
             pose = driver.child(2)
-            print pose.name()
             walk(context, parent, dagNodeFn, pose, driver_dict, "pose", children=["poseMatrix", "poseParentMatrix", "poseMode"])
+
+            # We need the pose's logical indices
+            context.add_dict_input(driver_dict, "poseMatrixIds", driver_key_list)
+            poseMatrixIds = [i for i in pose.getExistingArrayAttributeIndices()]
+            driver_dict.set_attribute(context, "poseMatrixIds", ["BufferUInt32", poseMatrixIds])
 
             # Get the driverInput connection
             driverInput_connections = driverInput.connectedTo(True, False)

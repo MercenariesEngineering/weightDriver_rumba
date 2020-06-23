@@ -50,6 +50,22 @@ class weightDriverExporter(NodeExporter):
         driverList_array = context.create_node(parent, "MakeArray", "array")
         context.connect(driverList_array.get_plug_path("array"), node.get_plug_path("driverList"))
 
+        input = dagNodeFn.findPlug("input", True)
+        inputIds = [i for i in input.getExistingArrayAttributeIndices()]
+        node.set_attribute(context, "inputIds", ["BufferUInt32", inputIds])
+
+        output = dagNodeFn.findPlug("output", True)
+        outputIds = [i for i in output.getExistingArrayAttributeIndices()]
+        node.set_attribute(context, "outputIds", ["BufferUInt32", outputIds])
+
+        pose = dagNodeFn.findPlug("pose", True)
+        poseIds = [i for i in pose.getExistingArrayAttributeIndices()]
+        node.set_attribute(context, "poseIds", ["BufferUInt32", poseIds])
+
+        restInput = dagNodeFn.findPlug("restInput", True)
+        restInputIds = [i for i in restInput.getExistingArrayAttributeIndices()]
+        node.set_attribute(context, "restInputIds", ["BufferUInt32", restInputIds])
+
         driverList = dagNodeFn.findPlug("driverList", True)
         logical_indices = driverList.getExistingArrayAttributeIndices()
         driver_count = 0 if len(logical_indices) == 0 else logical_indices[-1]+1

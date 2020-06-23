@@ -28,6 +28,14 @@ double getRadius(std::vector<double> vec1, std::vector<double> vec2);
 double getAngle(std::vector<double> vec1, std::vector<double> vec2);
 double interpolateRbf(double value, double width, short kernelType);
 
+void buffer_to_array(const BufferConstUInt32& b, MIntArray& a)
+{
+    a.setLength((unsigned)b.size());
+    const int n = (int)b.size();
+    for(int i = 0; i < n; ++i)
+        a[i] = b[i];
+}
+
 //
 // Description:
 //      Calculate the twist angle based on the given rotate order.
@@ -457,7 +465,11 @@ enum
     useRotate,
     useTranslate,
     poses,
-    driverList
+    driverList,
+    _inputIds,
+    _outputIds,
+    _poseIds,
+    _restInputIds,
 };
 
 //
@@ -764,13 +776,14 @@ void getPoseVectors(EvalContext& ctx,
 // Return Value:
 //      MStatus
 //
-MStatus getPoseData(EvalContext& ctx,
+void getPoseData(EvalContext& ctx,
                     std::vector<double> &driver,
                     unsigned &poseCount,
                     unsigned &solveCount,
                     BRMatrix &poseData,
                     BRMatrix &poseVals,
                     MIntArray &poseModes,
+                    MIntArray &poseMatrixIds,
                     int distanceTypeVal)
 {
     unsigned int i, j;
@@ -779,14 +792,11 @@ MStatus getPoseData(EvalContext& ctx,
     // get the number of outputs
     // -----------------------------------------------------------------
 
-    /*MPlug outputPlug(thisNode, weightDriver::output);
-    MIntArray outputIds;
-    outputPlug.getExistingArrayAttributeIndices(outputIds, &status);
-    CHECK_MSTATUS_AND_RETURN_IT(status);
-    solveCount = outputIds.length();*/
+    const BufferConstUInt32 outputIds = ctx.value(_outputIds);
+    solveCount = (unsigned)outputIds.size();
 
     // -----------------------------------------------------------------
-    // get the Array
+    // get the data handles
     // -----------------------------------------------------------------
 
     const Array inputHandle = ctx.value(input);
@@ -799,23 +809,23 @@ MStatus getPoseData(EvalContext& ctx,
     // get the array ids
     // -----------------------------------------------------------------
 
-    int inputIds_length = int(inputHandle.size());
-    int restInputIds_length = int(restInputHandle.size());
-    int poseIds_length = int(posesHandle.size());
+    MIntArray inputIds;
+    MIntArray restInputIds;
+    MIntArray poseIds;
 
-    /*inputPlug.getExistingArrayAttributeIndices(inputIds, &status);
-    CHECK_MSTATUS_AND_RETURN_IT(status);
+    const BufferConstUInt32 __inputIds = ctx.value(_inputIds);
+    buffer_to_array(__inputIds, inputIds);
 
-    restInputPlug.getExistingArrayAttributeIndices(restInputIds, &status);
-    CHECK_MSTATUS_AND_RETURN_IT(status);
+    const BufferConstUInt32 __restInputIds = ctx.value(_restInputIds);
+    buffer_to_array(__restInputIds, restInputIds);
 
-    posesPlug.getExistingArrayAttributeIndices(poseIds, &status);
-    CHECK_MSTATUS_AND_RETURN_IT(status);*/
+    const BufferConstUInt32 __poseIds = ctx.value(_poseIds);
+    buffer_to_array(__poseIds, poseIds);
 
-    unsigned inDim = inputIds_length;
-    unsigned restDim = restInputIds_length;
+    unsigned inDim = inputIds.length();
+    unsigned restDim = restInputIds.length();
 
-    poseCount = poseIds_length;
+    poseCount = poseIds.length();
     // Store the original pose count before the count gets modified
     // because of a missing 0 index.
     // The original index list is important when querying the last index
@@ -826,12 +836,11 @@ MStatus getPoseData(EvalContext& ctx,
     // Because Maya creates sparse arrays it's possible that the first
     // pose gets lost when a rest pose is present which only contain
     // zero values.
-/*    if (poseCount != 0 && poseIds[0] != 0)
+    if (poseCount != 0 && poseIds[0] != 0)
     {
         poseIds.insert(0, 0);
         poseCount ++;
-    }*/
-
+    }
     // Problem: *)
     // When loading a scene with the weightDriver node the index count
     // of the poses plug (compound array attribute) matches the number
@@ -843,7 +852,8 @@ MStatus getPoseData(EvalContext& ctx,
     // pose count doesn't need to be altered. But when the scene already
     // has been evaluated the children of the last index don't have any
     // elements and therefore can be ignored.
-    const Dict lastIdHandle = posesHandle.read(poseCountOriginal - 1);
+    // posesHandle.jumpToArrayElement(poseCountOriginal - 1);
+    const Dict lastIdHandle = posesHandle.read(poseIds[std::min(poseIds.length()-1, poseCountOriginal - 1)]);
     const Array lastInputArrayHandle = lastIdHandle.read("poseInput");
     unsigned lastInCount = (unsigned)lastInputArrayHandle.size();
     if (lastInCount == 0)
@@ -852,15 +862,13 @@ MStatus getPoseData(EvalContext& ctx,
     // Check for any pose connections. In case the pose attributes are
     // connected all data need to get re-evaluated, which slows down the
     // calculation.
-    /*unsigned int numConnChildren = posesPlug.numConnectedChildren();
+    /* unsigned int numConnChildren = posesPlug.numConnectedChildren();
     if (numConnChildren != 0 || poseCount != globalPoseCount)
-        evalInput = true;
-    */
-    const bool evalInput = true;
+        evalInput = true; */
 
     // Clear the indices for setting the output array values because
     // valid indices get appended.
-    MIntArray poseMatrixIds;
+    poseMatrixIds.clear();
 
     // -----------------------------------------------------------------
     // fill the driver and rest vector
@@ -871,12 +879,12 @@ MStatus getPoseData(EvalContext& ctx,
 
     for (i = 0; i < inDim; i ++)
     {
-        driver[i] = inputHandle.as_float(i);
+        driver[i] = inputHandle.read(inputIds[i]).as_float();
 
         // get the rest input
         if (i < restDim)
         {
-            rest[i] = restInputHandle.as_float(i);
+            rest[i] = restInputHandle.read(restInputIds[i]).as_float();
         }
         else
             rest[i] = 0.0;
@@ -891,7 +899,7 @@ MStatus getPoseData(EvalContext& ctx,
     // get the pose data
     // -----------------------------------------------------------------
 
-    if (poseCount != 0 && evalInput)
+    if (poseCount != 0 /* && evalInput */)
     {
         // globalPoseCount = poseCount;
 
@@ -924,10 +932,9 @@ MStatus getPoseData(EvalContext& ctx,
             // pose positions
             // ---------------------------------------------------------
 
-            if (i < int(posesHandle.size()))
             {
-                const Dict posesIdHandle = posesHandle.read(i);
-                const Array poseInputArrayHandle= posesIdHandle.read("poseInput");
+                const Dict posesIdHandle = posesHandle.read(poseIds[i]);
+                const Array poseInputArrayHandle = posesIdHandle.read("poseInput");
 
                 unsigned poseInputCount = (unsigned)poseInputArrayHandle.size();
 
@@ -937,8 +944,9 @@ MStatus getPoseData(EvalContext& ctx,
                     // might hold less data than is needed.
                     if (poseInputCount != 0)
                     {
-                        if (j < poseInputCount)
-                            poseData(i, j) = poseInputArrayHandle.as_float(j) - rest[j];
+                        // status = poseInputArrayHandle.jumpToElement(j);
+                        if(j < (unsigned)poseInputArrayHandle.size())
+                            poseData(i, j) = poseInputArrayHandle.read(j).as_float() - rest[j];
                     }
                 }
 
@@ -956,8 +964,9 @@ MStatus getPoseData(EvalContext& ctx,
                     // might hold less data than is needed.
                     if (valueCount != 0)
                     {
-                        if (j < valueCount)
-                            poseVals(i, j) = poseValueArrayHandle.as_float(j);
+                        // status = poseValueArrayHandle.jumpToElement(j);
+                        if (j < (unsigned)poseValueArrayHandle.size())
+                            poseVals(i, j) = poseValueArrayHandle.read(j).as_float();
                     }
                 }
             }
@@ -972,8 +981,6 @@ MStatus getPoseData(EvalContext& ctx,
             poseModes.set(0, i);
         }
     }
-
-    return MStatus::kSuccess;
 }
 
 rumba::Value compute(OutputPlug plug, EvalContext& ctx)
@@ -1188,11 +1195,11 @@ rumba::Value compute(OutputPlug plug, EvalContext& ctx)
             // for switching the display of the locator.
             // ---------------------------------------------------------
 
-            Array inputIds = ctx.value(input);
+            Array _inputIds = ctx.value(input);
 
             // Set generic mode to be the default.
             genericMode = true;
-            if (inputIds.size())
+            if (_inputIds.size())
             {
 /*                MDataHandle rbfModeHandle = ctx.outputValue(rbfMode);
                 rbfModeHandle.set(0);*/
@@ -1212,12 +1219,13 @@ rumba::Value compute(OutputPlug plug, EvalContext& ctx)
             BRMatrix matPoses;
             BRMatrix matValues;
             MIntArray poseModes;
+            MIntArray inputIds;
+            MIntArray poseIds;
 
             if (genericMode)
             {
                 // genericMode not supported right now
-                /*
-                unsigned int driverSize = (unsigned int)inputIds.size();
+                unsigned int driverSize = (unsigned int)_inputIds.size();
                 driver.resize(driverSize);
 
                 getPoseData(ctx,
@@ -1227,8 +1235,8 @@ rumba::Value compute(OutputPlug plug, EvalContext& ctx)
                     matPoses,
                     matValues,
                     poseModes,
+                    poseMatrixIds,
                     distanceTypeVal);
-                */
             }
             else
             {
@@ -1463,6 +1471,10 @@ void register_weightDriver( Registry &r )
             { "blendCurve", Array::default_value },
             { "poses", Array::default_value },
             { "driverList", Array::default_value },
+            { "inputIds", BufferConstUInt32::default_value },
+            { "outputIds", BufferConstUInt32::default_value },
+            { "poseIds", BufferConstUInt32::default_value },
+            { "restInputIds", BufferConstUInt32::default_value },
             { "output", Array::default_value, 0, "",
                 eval_output,
                 {
@@ -1497,7 +1509,11 @@ void register_weightDriver( Registry &r )
                     { "useRotate" },
                     { "useTranslate" },
                     { "poses" },
-                    { "driverList" }
+                    { "driverList" },
+                    { "inputIds" },
+                    { "outputIds" },
+                    { "poseIds" },
+                    { "restInputIds" },
                 }
             },
             { "outWeight", 0.f, 0, "",
@@ -1534,7 +1550,11 @@ void register_weightDriver( Registry &r )
                     { "useRotate" },
                     { "useTranslate" },
                     { "poses" },
-                    { "driverList" }
+                    { "driverList" },
+                    { "inputIds" },
+                    { "outputIds" },
+                    { "poseIds" },
+                    { "restInputIds" },
                 }
             }
         }

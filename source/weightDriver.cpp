@@ -17,7 +17,7 @@
 const float DEGTORAD = (float)(M_PI / 180);
 const float RADTODEG = (float)(180 / M_PI);
 
-#include "rumba/Rumba.h"
+#include "Rumba/Rumba.h"
 #include <maya/MIntArray.h>
 
 using namespace rumba;

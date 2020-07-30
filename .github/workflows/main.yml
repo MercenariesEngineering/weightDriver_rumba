@@ -25,17 +25,14 @@ jobs:
     - name: Installing SDK
       shell: bash
       run: |
-        wget http://guerillarender.com/download/rumba-sdk.zip
-        unzip rumba-sdk.zip
-
-    - name: Install Conan
-      run: |
-        pip install conan
+        python install_sdk.py
 
     - name: Build
+      shell: bash
       run: |
         mkdir build
         cd build
-        cmake ../source -G "Visual Studio 16 2019" -T "v140" "-Drumba_DIR=/c/Program Files/Rumba/sdk/"
+        cwd=`pwd`
+        cmake ../source -G "Visual Studio 16 2019" -T "v140" "-Drumba_DIR=$cwd/../sdk/"
         cmake --build . --config release
-        
+

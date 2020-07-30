@@ -23,7 +23,7 @@ jobs:
     - uses: actions/checkout@v2
 
     - name: Installing SDK
-    - shell: bash
+      shell: bash
       run: |
         wget http://guerillarender.com/download/rumba-sdk.zip
         unzip rumba-sdk.zip

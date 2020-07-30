@@ -33,7 +33,7 @@ jobs:
         echo test, and deploy your project.
 
     - name: Build
-
+      run: |
         mkdir build
         cd build
         cmake ../src "-Drumba_DIR=/c/Program Files/Rumba/sdk/"

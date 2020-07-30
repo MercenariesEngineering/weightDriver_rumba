@@ -36,6 +36,6 @@ jobs:
       run: |
         mkdir build
         cd build
-        cmake ../src "-Drumba_DIR=/c/Program Files/Rumba/sdk/"
+        cmake ../source "-Drumba_DIR=/c/Program Files/Rumba/sdk/"
         cmake --build . --config release
         

@@ -40,6 +40,6 @@ jobs:
       run: |
         mkdir build
         cd build
-        cmake ../source -G "Visual Studio 14 2015 Win64" "-Drumba_DIR=/c/Program Files/Rumba/sdk/"
+        cmake ../source -G "Visual Studio 16 2019 Win64" -T "v140" "-Drumba_DIR=/c/Program Files/Rumba/sdk/"
         cmake --build . --config release
         

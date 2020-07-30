@@ -35,4 +35,10 @@ jobs:
         cwd=`pwd`
         cmake ../source -G "Visual Studio 16 2019" -T "v140" "-Drumba_DIR=$cwd/../sdk/"
         cmake --build . --config release
+        cd ..
 
+    - name: Binary artifacts
+      uses: actions/upload-artifact@v2
+      with:
+        name: weightDriver.dll
+        path: build/Release/weightDriver.dll

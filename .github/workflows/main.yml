@@ -32,10 +32,14 @@ jobs:
         echo Add other actions to build,
         echo test, and deploy your project.
 
+    - name: Install Conan
+      run: |
+        pip install conan
+
     - name: Build
       run: |
         mkdir build
         cd build
-        cmake ../source "-Drumba_DIR=/c/Program Files/Rumba/sdk/"
+        cmake ../source -G "Visual Studio 14 2015 Win64" "-Drumba_DIR=/c/Program Files/Rumba/sdk/"
         cmake --build . --config release
         

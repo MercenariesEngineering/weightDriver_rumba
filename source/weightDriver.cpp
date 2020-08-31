@@ -501,7 +501,7 @@ void getPoseVectors(EvalContext& ctx,
     MIntArray &poseModes,
     unsigned twistAxisVal,
     bool invertAxes,
-    unsigned driverId,
+    unsigned /* driverId */,
     MIntArray& poseMatrixIds
     )
 {
@@ -996,15 +996,15 @@ rumba::Value compute(OutputPlug plug, EvalContext& ctx)
     int dirVal = ctx.as_int(direction);
     int distanceTypeVal = ctx.as_int(distanceType);
     int driverIndexVal = ctx.as_int(driverIndex);
-    bool evalInput = ctx.as_bool(evaluate);
+    /* bool evalInput = ctx.as_bool(evaluate); */
     bool growVal = ctx.as_bool(grow);
-    short interVal = ctx.as_int(interpolation);
+    short interVal = (short)ctx.as_int(interpolation);
     bool invVal = ctx.as_bool(invert);
-    short kernelVal = ctx.as_int(kernel);
+    short kernelVal = (short)ctx.as_int(kernel);
     bool oppositeVal = ctx.as_bool(opposite);
     double scaleVal = ctx.as_float(scale);
     double twistAngleVal = ctx.as_float(twistAngle);
-    short twistAxisVal = ctx.as_int(twistAxis);
+    short twistAxisVal = (short)ctx.as_int(twistAxis);
     bool twistVal = ctx.as_bool(twist);
     double translateMaxVal = ctx.as_float(translateMax);
     double translateMinVal = ctx.as_float(translateMin);

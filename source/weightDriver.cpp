@@ -14,7 +14,7 @@
 
 #define DOUBLE_EPSILON 2.2204460492503131e-16
 
-const float DEGTORAD = (float)(M_PI / 180);
+
 const float RADTODEG = (float)(180 / M_PI);
 
 #include "Rumba/Rumba.h"
@@ -564,7 +564,7 @@ void getPoseVectors(EvalContext& ctx,
         // -------------------------------------------------------------
 
         MVector driverMVec = baseVec * transMatDriver.asMatrix();
-        MVector driverMVecDraw = baseVec * driverMat;
+
 
         // -------------------------------------------------------------
         // set the driver vector and twist
@@ -1407,7 +1407,7 @@ rumba::Value compute(OutputPlug plug, EvalContext& ctx)
         Array output;
         setOutputValues(weightsArray, output, false, poseMatrixIds, genericMode);
 
-        return output;
+        return std::move(output);
     }
     else if (plug == output && !activeVal)
     {
@@ -1416,7 +1416,7 @@ rumba::Value compute(OutputPlug plug, EvalContext& ctx)
         da[0] = 0.0;
         setOutputValues(da, output, true, poseMatrixIds, genericMode);
 
-        return output;
+        return std::move(output);
     }
 
     return Value::default_value;

@@ -9,6 +9,7 @@
 // ---------------------------------------------------------------------
 
 #include "weightDriver.h"
+#include "DictOrArray.h"
 
 #include "math.h"
 
@@ -642,9 +643,9 @@ void getPoseVectors(EvalContext& ctx,
             for (i = 0; i < poseCount; i ++)
             {
                 // status = poseArrayHandle.jumpToArrayElement(i);
-                const Dict poseIdHandle = poseArrayHandle.read(poseMatrixIds[i]);
-                MMatrix poseMat = poseIdHandle.as_M44f("poseMatrix");
-                MMatrix parentMat = poseIdHandle.as_M44f("poseParentMatrix");
+                const DictOrArray poseIdHandle = poseArrayHandle.read(poseMatrixIds[i]);
+                MMatrix poseMat = poseIdHandle.as_M44f("poseMatrix", 0);
+                MMatrix parentMat = poseIdHandle.as_M44f("poseParentMatrix", 1);
 
                 MMatrix poseMatRel = poseMat * parentMat.inverse() * jointOrientMatInv;
 
@@ -652,7 +653,7 @@ void getPoseVectors(EvalContext& ctx,
                 // pose mode
                 // -----------------------------------------------------
 
-                int poseModeValue = poseIdHandle.as_int("poseMode");
+                int poseModeValue = poseIdHandle.as_int("poseMode", 2);
                 poseModes.set(poseModeValue, i);
 
                 // Evaluation for the processing the matrices always
@@ -853,8 +854,8 @@ void getPoseData(EvalContext& ctx,
     // has been evaluated the children of the last index don't have any
     // elements and therefore can be ignored.
     // posesHandle.jumpToArrayElement(poseCountOriginal - 1);
-    const Dict lastIdHandle = posesHandle.read(poseIds[std::min(poseIds.length()-1, poseCountOriginal - 1)]);
-    const Array lastInputArrayHandle = lastIdHandle.read("poseInput");
+    const DictOrArray lastIdHandle = posesHandle.read(poseIds[std::min(poseIds.length()-1, poseCountOriginal - 1)]);
+    const Array lastInputArrayHandle = lastIdHandle.read("poseInput", 0);
     unsigned lastInCount = (unsigned)lastInputArrayHandle.size();
     if (lastInCount == 0)
         poseCount --;
@@ -933,8 +934,8 @@ void getPoseData(EvalContext& ctx,
             // ---------------------------------------------------------
 
             {
-                const Dict posesIdHandle = posesHandle.read(poseIds[i]);
-                const Array poseInputArrayHandle = posesIdHandle.read("poseInput");
+                const DictOrArray posesIdHandle = posesHandle.read(poseIds[i]);
+                const Array poseInputArrayHandle = posesIdHandle.read("poseInput", 0);
 
                 unsigned poseInputCount = (unsigned)poseInputArrayHandle.size();
 
@@ -954,7 +955,7 @@ void getPoseData(EvalContext& ctx,
                 // pose values
                 // -----------------------------------------------
 
-                const Array poseValueArrayHandle = posesIdHandle.read("poseValue");
+                const Array poseValueArrayHandle = posesIdHandle.read("poseValue", 1);
 
                 unsigned valueCount = (unsigned)poseValueArrayHandle.size();
 

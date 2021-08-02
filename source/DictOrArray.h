@@ -5,30 +5,30 @@
 class DictOrArray
 {
 public:
-  DictOrArray(const rumba::Value& value);
+  DictOrArray(const maquina::Value& value);
   float as_float(const char* name, size_t index) const;
   Imath::V3f as_V3f(const char* name, size_t index) const;
   Imath::V3f as_V3f(const char* name, size_t index, const Imath::V3f& default_) const;
-  rumba::Value read(const char* name, size_t index) const;
+  maquina::Value read(const char* name, size_t index) const;
   int as_int(const char* name, size_t index) const;
   int as_int(const char* name, size_t index, int default_) const;
   bool as_bool(const char* name, size_t index, bool default_) const;
   Imath::M44f as_M44f(const char* name, size_t index) const;
 private:
 
-  rumba::Value _array_lookup(size_t i) const
+  maquina::Value _array_lookup(size_t i) const
   {
     if(i < _array.size())
       return _array[i];
-    return rumba::Value::default_value;
+    return maquina::Value::default_value;
   }
 
   bool _is_dict;
-  rumba::Dict _dict;
-  rumba::Array _array;
+  maquina::Dict _dict;
+  maquina::Array _array;
 };
 
-inline DictOrArray::DictOrArray(const rumba::Value& value) :
+inline DictOrArray::DictOrArray(const maquina::Value& value) :
   _is_dict(value.is_instance("Dict")),
   _dict(value),
   _array(value)
@@ -49,7 +49,7 @@ inline Imath::V3f DictOrArray::as_V3f(const char* name, size_t index, const Imat
   return _is_dict ? _dict.as_V3f(name, default_) : (index < _array.size() ? _array.as_V3f(index) : default_);
 }
 
-inline rumba::Value DictOrArray::read(const char* name, size_t index) const
+inline maquina::Value DictOrArray::read(const char* name, size_t index) const
 {
   return _is_dict ? _dict.read(name) : _array_lookup(index);
 }

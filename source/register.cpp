@@ -1,7 +1,7 @@
 
 #include "Maquina/Maquina.h"
 
-using namespace rumba;
+using namespace maquina;
 
 void register_weightDriver( Registry &r );
 

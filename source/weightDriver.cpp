@@ -21,7 +21,7 @@ const float RADTODEG = (float)(180 / M_PI);
 #include "Maquina/Maquina.h"
 #include <maya/MIntArray.h>
 
-using namespace rumba;
+using namespace maquina;
 using namespace Imath;
 
 double getPoseDelta(std::vector<double> vec1, std::vector<double> vec2, int distType);
@@ -984,7 +984,7 @@ void getPoseData(EvalContext& ctx,
     }
 }
 
-rumba::Value compute(OutputPlug plug, EvalContext& ctx)
+maquina::Value compute(OutputPlug plug, EvalContext& ctx)
 {
     // -----------------------------------------------------------------
     // get the attributes

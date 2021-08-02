@@ -18,7 +18,7 @@
 
 const float RADTODEG = (float)(180 / M_PI);
 
-#include "Rumba/Rumba.h"
+#include "Maquina/Maquina.h"
 #include <maya/MIntArray.h>
 
 using namespace rumba;

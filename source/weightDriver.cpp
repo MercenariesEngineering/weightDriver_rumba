@@ -542,10 +542,10 @@ void getPoseVectors(EvalContext& ctx,
         // get the attributes
         // -------------------------------------------------------------
 
-        MMatrix driverMat = driverListIdHandle.as_M44f("driverInput");
-        MMatrix driverParentMatInv = driverListIdHandle.as_M44f("driverParentMatInv");
-        const V3f jointOrient = driverListIdHandle.as_V3f("driverParentJointOrient");
-        const MMatrix jointOrientMatInv = Eulerf(jointOrient, Eulerf::Order::XYZ).toMatrix44().inverse();
+        MMatrix driverMat = driverListIdHandle.as_M44d("driverInput");
+        MMatrix driverParentMatInv = driverListIdHandle.as_M44d("driverParentMatInv");
+        const V3d jointOrient = driverListIdHandle.as_V3d("driverParentJointOrient");
+        const MMatrix jointOrientMatInv = Eulerd(jointOrient, Eulerd::Order::XYZ).toMatrix44().inverse();
 
         const Array poseArrayHandle(driverListIdHandle.read("pose"));
         {
@@ -644,8 +644,8 @@ void getPoseVectors(EvalContext& ctx,
             {
                 // status = poseArrayHandle.jumpToArrayElement(i);
                 const DictOrArray poseIdHandle = poseArrayHandle.read(poseMatrixIds[i]);
-                MMatrix poseMat = poseIdHandle.as_M44f("poseMatrix", 0);
-                MMatrix parentMat = poseIdHandle.as_M44f("poseParentMatrix", 1);
+                MMatrix poseMat = poseIdHandle.as_M44d("poseMatrix", 0);
+                MMatrix parentMat = poseIdHandle.as_M44d("poseParentMatrix", 1);
 
                 MMatrix poseMatRel = poseMat * parentMat.inverse() * jointOrientMatInv;
 
@@ -880,12 +880,12 @@ void getPoseData(EvalContext& ctx,
 
     for (i = 0; i < inDim; i ++)
     {
-        driver[i] = inputHandle.read(inputIds[i]).as_float();
+        driver[i] = inputHandle.read(inputIds[i]).as_double();
 
         // get the rest input
         if (i < restDim)
         {
-            rest[i] = restInputHandle.read(restInputIds[i]).as_float();
+            rest[i] = restInputHandle.read(restInputIds[i]).as_double();
         }
         else
             rest[i] = 0.0;
@@ -947,7 +947,7 @@ void getPoseData(EvalContext& ctx,
                     {
                         // status = poseInputArrayHandle.jumpToElement(j);
                         if(j < (unsigned)poseInputArrayHandle.size())
-                            poseData(i, j) = poseInputArrayHandle.read(j).as_float() - rest[j];
+                            poseData(i, j) = poseInputArrayHandle.read(j).as_double() - rest[j];
                     }
                 }
 
@@ -967,7 +967,7 @@ void getPoseData(EvalContext& ctx,
                     {
                         // status = poseValueArrayHandle.jumpToElement(j);
                         if (j < (unsigned)poseValueArrayHandle.size())
-                            poseVals(i, j) = poseValueArrayHandle.read(j).as_float();
+                            poseVals(i, j) = poseValueArrayHandle.read(j).as_double();
                     }
                 }
             }
@@ -991,9 +991,9 @@ maquina::Value compute(OutputPlug plug, EvalContext& ctx)
     // -----------------------------------------------------------------
     bool activeVal = ctx.as_bool(active);
     bool allowNegativeVal = ctx.as_bool(allowNegativeWeights);
-    double angleVal = ctx.as_float(angle);
-    double biasVal = ctx.as_float(bias);
-    double centerAngleVal = ctx.as_float(centerAngle);
+    double angleVal = ctx.as_double(angle);
+    double biasVal = ctx.as_double(bias);
+    double centerAngleVal = ctx.as_double(centerAngle);
     int dirVal = ctx.as_int(direction);
     int distanceTypeVal = ctx.as_int(distanceType);
     int driverIndexVal = ctx.as_int(driverIndex);
@@ -1003,12 +1003,12 @@ maquina::Value compute(OutputPlug plug, EvalContext& ctx)
     bool invVal = ctx.as_bool(invert);
     short kernelVal = (short)ctx.as_int(kernel);
     bool oppositeVal = ctx.as_bool(opposite);
-    double scaleVal = ctx.as_float(scale);
-    double twistAngleVal = ctx.as_float(twistAngle);
+    double scaleVal = ctx.as_double(scale);
+    double twistAngleVal = ctx.as_double(twistAngle);
     short twistAxisVal = (short)ctx.as_int(twistAxis);
     bool twistVal = ctx.as_bool(twist);
-    double translateMaxVal = ctx.as_float(translateMax);
-    double translateMinVal = ctx.as_float(translateMin);
+    double translateMaxVal = ctx.as_double(translateMax);
+    double translateMinVal = ctx.as_double(translateMin);
     bool useInterpolationVal = ctx.as_bool(useInterpolation);
     bool useRotateVal = ctx.as_bool(useRotate);
     bool useTranslateVal = ctx.as_bool(useTranslate);
@@ -1038,9 +1038,9 @@ maquina::Value compute(OutputPlug plug, EvalContext& ctx)
             // get the general matrix data handles
             // ---------------------------------------------------------
 
-            MMatrix readerMat = ctx.as_M44f(readerMatrix);
+            MMatrix readerMat = ctx.as_M44d(readerMatrix);
 
-            MMatrix driverMat = ctx.as_M44f(driverMatrix);
+            MMatrix driverMat = ctx.as_M44d(driverMatrix);
 
             MTransformationMatrix transMatReader = readerMat;
             MTransformationMatrix transMatDriver = driverMat;
@@ -1467,8 +1467,8 @@ void register_weightDriver( Registry &r )
             { "useInterpolation", true },
             { "useRotate", true },
             { "useTranslate", false },
-            { "driverMatrix", identity44f },
-            { "readerMatrix", identity44f },
+            { "driverMatrix", identity44d },
+            { "readerMatrix", identity44d },
             { "blendCurve", Array::default_value },
             { "poses", Array::default_value },
             { "driverList", Array::default_value },

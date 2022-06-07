@@ -6,14 +6,14 @@ class DictOrArray
 {
 public:
   DictOrArray(const maquina::Value& value);
-  float as_float(const char* name, size_t index) const;
-  Imath::V3f as_V3f(const char* name, size_t index) const;
-  Imath::V3f as_V3f(const char* name, size_t index, const Imath::V3f& default_) const;
+  double as_double(const char* name, size_t index) const;
+  const Imath::V3d& as_V3d(const char* name, size_t index) const;
+  const Imath::V3d& as_V3d(const char* name, size_t index, const Imath::V3d& default_) const;
   maquina::Value read(const char* name, size_t index) const;
   int as_int(const char* name, size_t index) const;
   int as_int(const char* name, size_t index, int default_) const;
   bool as_bool(const char* name, size_t index, bool default_) const;
-  Imath::M44f as_M44f(const char* name, size_t index) const;
+  const Imath::M44d& as_M44d(const char* name, size_t index) const;
 private:
 
   maquina::Value _array_lookup(size_t i) const
@@ -34,19 +34,19 @@ inline DictOrArray::DictOrArray(const maquina::Value& value) :
   _array(value)
 {}
 
-inline float DictOrArray::as_float(const char* name, size_t index) const
+inline double DictOrArray::as_double(const char* name, size_t index) const
 {
-  return _is_dict ? _dict.as_float(name) : _array_lookup(index).as_float();
+  return _is_dict ? _dict.as_double(name) : _array_lookup(index).as_double();
 }
 
-inline Imath::V3f DictOrArray::as_V3f(const char* name, size_t index) const
+inline const Imath::V3d& DictOrArray::as_V3d(const char* name, size_t index) const
 {
-  return _is_dict ? _dict.as_V3f(name) : _array_lookup(index).as_V3f();
+  return _is_dict ? _dict.as_V3d(name) : _array_lookup(index).as_V3d();
 }
 
-inline Imath::V3f DictOrArray::as_V3f(const char* name, size_t index, const Imath::V3f& default_) const
+inline const Imath::V3d& DictOrArray::as_V3d(const char* name, size_t index, const Imath::V3d& default_) const
 {
-  return _is_dict ? _dict.as_V3f(name, default_) : (index < _array.size() ? _array.as_V3f(index) : default_);
+  return _is_dict ? _dict.as_V3d(name, default_) : (index < _array.size() ? _array.as_V3d(index) : default_);
 }
 
 inline maquina::Value DictOrArray::read(const char* name, size_t index) const
@@ -69,7 +69,7 @@ inline bool DictOrArray::as_bool(const char* name, size_t index, bool default_) 
   return _is_dict ? _dict.as_bool(name, default_) : (index < _array.size() ? _array.as_bool(index) : default_);
 }
 
-inline Imath::M44f DictOrArray::as_M44f(const char* name, size_t index) const
+inline const Imath::M44d& DictOrArray::as_M44d(const char* name, size_t index) const
 {
-  return _is_dict ? _dict.as_M44f(name) : _array_lookup(index).as_M44f();
+  return _is_dict ? _dict.as_M44d(name) : _array_lookup(index).as_M44d();
 }

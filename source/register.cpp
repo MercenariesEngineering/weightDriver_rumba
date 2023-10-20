@@ -1,12 +1,12 @@
 
-#include "Rumba/Rumba.h"
+#include "Maquina/Maquina.h"
 
-using namespace rumba;
+using namespace maquina;
 
 void register_weightDriver( Registry &r );
 
-RUMBA_DECLARE_PLUGINS
-RUMBA_REGISTER_PLUGINS
+MAQUINA_DECLARE_PLUGINS
+MAQUINA_REGISTER_PLUGINS
 {
     register_weightDriver(r);
 }

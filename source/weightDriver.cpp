@@ -1408,7 +1408,7 @@ maquina::Value compute(OutputPlug plug, EvalContext& ctx)
         Array output;
         setOutputValues(weightsArray, output, false, poseMatrixIds, genericMode);
 
-        return std::move(output);
+        return output;
     }
     else if (plug == output && !activeVal)
     {
@@ -1417,7 +1417,7 @@ maquina::Value compute(OutputPlug plug, EvalContext& ctx)
         da[0] = 0.0;
         setOutputValues(da, output, true, poseMatrixIds, genericMode);
 
-        return std::move(output);
+        return output;
     }
 
     return Value::default_value;
